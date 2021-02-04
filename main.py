@@ -1,114 +1,42 @@
-import os
+import argparse
 import torch
-import torchvision
-import torch.nn as nn
-import torch.optim as optim
-from torchvision import transforms
-from torchvision.utils import save_image
-from torch.autograd import Variable
-import matplotlib.pyplot as plt
-import pylab
-import numpy as np
-import torchvision.utils as vutils
-from dataloader import CIFAR10, Imagefolder
-from arguments import Arguments
-from model.VGGNet import VGG
-from utils import progress_bar
-from torchvision import datasets, models, transforms
+from train import Classification
 
-class Main():
-    def __init__(self,args):
-        self.args = args
-        #dataset
+def Arguments():
+    parser = argparse.ArgumentParser(description='Arguments for pix2pix.')
 
-        self.trainset, self.testset = Imagefolder(self.args)
-        #Module
-        # self.net = VGG().to(device= args.device)
-        self.model_ft = models.resnet18(pretrained=True)
-        num_ftrs = self.model_ft.fc.in_features
-        # 여기서 각 출력 샘플의 크기는 2로 설정합니다.
-        # 또는, nn.Linear(num_ftrs, len (class_names))로 일반화할 수 있습니다.
-        self.model_ft.fc = nn.Linear(num_ftrs, 20)
+    parser.add_argument('--gpu', type=int, default=1, help='GPU number to use.')
+    # Dataset arguments
+    parser.add_argument('--batch_size', type=int, default=256, help='Integer value for batch size.')
+    parser.add_argument('--image_size', type=int, default=256, help='Integer value for number of points.')
+    parser.add_argument('--input_nc', type=int, default=3, help='size of image height')
+    parser.add_argument('--num_classes', type=int, default=10, help='size of image height')
+    
+    # Optimizer arguments
+    parser.add_argument('--b1', type=int, default=0.5, help='GPU number to use.')
+    parser.add_argument('--b2', type=int, default=0.999, help='GPU number to use.')
+    parser.add_argument('--lr', type=float, default=0.1, help='Adam : learning rate.')
+    parser.add_argument('--decay_epoch', type=int, default=20, help="epoch from which to start lr decay")
+    # Training arguments
+    parser.add_argument('--epoch', type=int, default=0, help='Epoch to start training from.')
+    parser.add_argument('--num_epochs', type=int, default=120, help='Number of epochs of training.')
+    parser.add_argument('--data_path', type=str, default='/mnt/hdd/LJJ/resnet/', help='Checkpoint path.')
+    parser.add_argument('--ckpt_path', type=str, default='/mnt/hdd/LJJ/resnet/ckpt/', help='Checkpoint path.')
+    parser.add_argument('--log_path', type=str, default='/mnt/hdd/LJJ/resnet/log/', help='Generated results path.')
+    parser.add_argument('--result_path', type=str, default='/mnt/hdd/LJJ/resnet/result/', help='Generated results path.')
+    
+    # Network argument
+    
+    # Model arguments
+    args = parser.parse_args()
+    return args
 
-        self.model_ft = self.model_ft.to(device= args.device)
-        # self.net.load_state_dict(torch.load(self.args.ckpt_path+"Resnet_epoch_60.pth"))
-        # self.net = self.net
-        self.criterion = nn.CrossEntropyLoss().to(device= args.device)
-        self.optimizer = optim.SGD(self.model_ft.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
-        self.scheduler = optim.lr_scheduler.CosineAnnealingLR(self.optimizer, T_max=args.num_epochs)
-
-    def run(self):
-        
-        print('\nEpoch: %d' % epoch)
-        self.model_ft.train()
-        train_loss = 0
-        correct = 0
-        total = 0
-        for batch_idx, (inputs, targets) in enumerate(self.trainset):
-            inputs, targets = inputs.to(device=self.args.device), targets.to(device=self.args.device)
-            self.optimizer.zero_grad()
-            outputs = self.model_ft(inputs)
-            loss = self.criterion(outputs, targets)
-            loss.backward()
-            self.optimizer.step()
-
-            train_loss += loss.item()
-            _, predicted = torch.max(outputs, 1)
-            total += targets.size(0)
-            correct += predicted.eq(targets).sum().item()
-
-            progress_bar(batch_idx, len(self.trainset), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-                        % (train_loss/(batch_idx+1), 100.*correct/total, correct, total))
-        # if epoch%10==0:
-        #     # torch.save(self.net.state_dict(), '%sResnet_epoch_%d.pth' % (save_ckpt, epoch))
-        self.scheduler.step()
-            
-    def test(self, save_ckpt=None):
-        
-        global best_acc
-        self.model_ft.eval()
-        test_loss = 0
-        correct = 0
-        total = 0
-        with torch.no_grad():
-            for batch_idx, (inputs, targets) in enumerate(self.testset):
-                inputs, targets = inputs.to(self.args.device), targets.to(self.args.device)
-                outputs = self.model_ft(inputs)
-                loss = self.criterion(outputs, targets)
-
-                test_loss += loss.item()
-                _, predicted = outputs.max(1)
-                total += targets.size(0)
-                correct += predicted.eq(targets).sum().item()
-
-                progress_bar(batch_idx, len(self.testset), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-                            % (test_loss/(batch_idx+1), 100.*correct/total, correct, total))
-
-        # Save checkpoint.
-        acc = 100.*correct/total
-        if acc > best_acc:
-            print('Saving..')
-            
-            torch.save(self.model_ft.state_dict(), '%sResnet_epoch_%d.pth' % (save_ckpt, epoch))
-            best_acc = acc
-
-
-                
 if __name__ == '__main__':
-    args = Arguments().parser().parse_args()
+    args = Arguments()
 
     args.device = torch.device('cuda:'+str(args.gpu) if torch.cuda.is_available() else 'cpu')
 
-    # Create a directory if not exists
-    best_acc = 0
-    if os.path.exists(args.ckpt_path) is False:
-        os.makedirs(args.ckpt_path)
-
-    if os.path.exists(args.result_path) is False:
-        os.makedirs(args.result_path)
-
+    model = Classification(args)
     
-    model = Main(args)
-    for epoch in range(args.num_epochs):
-        model.run()
-        model.test(save_ckpt=args.ckpt_path)
+    model.run(ckpt_path=args.ckpt_path, result_path=args.result_path)
+ 
