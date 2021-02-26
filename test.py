@@ -40,11 +40,8 @@ def test(args):
 
             corrects += torch.sum(preds == labels.data)
 
-            # 한 배치의 첫 번째 이미지에 대하여 결과 시각화
-            print(f'[예측 결과: {class_names[preds[0]]}] (실제 정답: {class_names[labels.data[0]]})')
-            # imshow(inputs.cpu().data[0], title='예측 결과: ' + class_names[preds[0]])
-
-
+            print(f'[Predicted Result: {class_names[preds[0]]}] (Ground Truth: {class_names[labels.data[0]]})')
+            # imshow(inputs.cpu().data[0], title=' Predicted Result: ' + class_names[preds[0]])
         epoch_acc = corrects / len(test_datasets) * 100.
         print('[Test Phase]  Acc: {:.4f}% Time: {:.4f}s'.format(epoch_acc, time.time() - start_time))
 
