@@ -30,16 +30,10 @@ class Classification():
         self.test_datasets, self.test_dataloader = data_loader(self.args, mode='test')
 
         # Network
-        # self.net = ResNet(in_channels=self.args.input_nc,num_classes=self.args.num_classes,resblock=[3, 4, 6, 3]).to(device=self.args.device)
-        # init_weight(self.net, init_type="kaiming", init_gain=0.02)
-
-        self.net = models.resnet34(pretrained=True)
-        num_features= self.net.fc.in_features
-        self.net.fc = nn.Linear(num_features, 3)
-        self.net = self.net.to(device=self.args.device)
-
+        self.net = model_select(args)
+        
         self.criterion = nn.CrossEntropyLoss().to(device=self.args.device)
-        self.optimizer = optim.SGD(self.net.parameters(), lr=self.args.lr, momentum = 0.9, weight_decay=5e-4)
+        self.optimizer = optim.SGD(self.net.parameters(), lr=self.args.lr, momentum = args.momentum, weight_decay=args.weight_decay)
         
         # self.lr_scheduler = torch.optim.lr_scheduler.LambdaLR(self.optimizer, lr_lambda=LambdaLR(self.args.num_epochs, self.args.epoch, self.args.decay_epoch).step)
 
@@ -76,9 +70,10 @@ class Classification():
             # print(self.lr_scheduler.optimizer.state_dict()['param_groups'][0]['lr'])
             
 
-            self.net.eval()
-            start_time = time.time()
-            class_names = self.test_datasets.class_names
+            
+        self.net.eval()
+        start_time = time.time()
+        class_names = self.test_datasets.class_names
         with torch.no_grad():
             running_loss = 0.
             running_corrects = 0

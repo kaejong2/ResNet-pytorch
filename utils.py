@@ -8,6 +8,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from torch.nn import init
 import shutil
+from model import *
+from torchvision import transforms, models
+
 
 class LambdaLR():
     def __init__(self, n_epochs, offset, decay_start_epoch):
@@ -80,3 +83,25 @@ def imshow(input, title):
     plt.imshow(input)
     plt.title(title)
     plt.show()
+
+def model_select(args):
+    if args.model_scope == "resnet":
+        resblock = [int(args.resblock[0]), int(args.resblock[1]),int(args.resblock[2]),int(args.resblock[3])]
+        model = ResNet(in_channels=args.input_nc, num_classes=args.num_classes, resblock=resblock).to(device=args.device)
+        init_weight(model, init_type=args.init_weight, init_gain=0.02)
+    
+    elif args.model_scope == "VGG":
+        model = VGG(in_channels=args.input_nc, out_channels=args.num_classes).to(device=args.device)
+        init_weight(model, init_type=args.init_weight, init_gain=0.02)
+    
+    elif args.model_scope == "VGG":
+        model = LeNet5(n_classes=args.num_classes).to(device=args.device)
+        init_weight(model, init_type=args.init_weight, init_gain=0.02)
+
+    elif args.model_scope == "pre_resnet":
+        model = models.resnet34(pretrained=True)
+        num_features= model.fc.in_features
+        model.fc = nn.Linear(num_features, args.num_classes)
+        model = model.to(device=args.device)
+
+    return model

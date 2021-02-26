@@ -29,6 +29,11 @@ def Arguments():
     parser.add_argument('--result_path', type=str, default='result/celeb', help='Results path.')
     
     # Network argument
+    parser.add_argument('--model_scope', type=str, default="resnet", help='')
+    parser.add_argument('--resblock', type=str, default="2222", help='Enter 4 digits')
+    parser.add_argument('--pretrained', type=str, default=False, help='')
+    parser.add_argument('--init_weight', type=str, default="kaiming", help='')
+
     
     # Model arguments
     args = parser.parse_args()
@@ -38,20 +43,20 @@ if __name__ == '__main__':
     args = Arguments()
     args.device = torch.device('cuda:'+str(args.gpu) if torch.cuda.is_available() else 'cpu')
     
-    os.makedirs("%s/%s" % (args.root_path, args.data_path), exist_ok=True)
-    os.makedirs("%s/%s" % (args.root_path, args.ckpt_path), exist_ok=True)
-    os.makedirs("%s/%s" % (args.root_path, args.result_path), exist_ok=True)
+    # os.makedirs("%s/%s" % (args.root_path, args.data_path), exist_ok=True)
+    # os.makedirs("%s/%s" % (args.root_path, args.ckpt_path), exist_ok=True)
+    # os.makedirs("%s/%s" % (args.root_path, args.result_path), exist_ok=True)
 
-    for arg, value in vars(args).items():
-        print("log %s : %r" % (arg, value))
+    # for arg, value in vars(args).items():
+    #     print("log %s : %r" % (arg, value))
     
-    if args.mode == 'train':
-        model = Classification(args)
-        model.run()
-    elif args.mode == 'test':
-        os.makedirs("%s/%s_test" % (args.root_path, args.result_path), exist_ok=True)
-        test(args)
-    elif args.mode == 'data_crawling':
-        query = 'Jake Gyllenhaal'
-        data_crawler(args, query)
-
+    # if args.mode == 'train':
+    #     model = Classification(args)
+    #     model.run()
+    # elif args.mode == 'test':
+    #     os.makedirs("%s/%s_test" % (args.root_path, args.result_path), exist_ok=True)
+    #     test(args)
+    # elif args.mode == 'data_crawling':
+    #     query = 'Jake Gyllenhaal'
+    #     data_crawler(args, query)
+    block = [int(args.resblock[0]), int(args.resblock[1]),int(args.resblock[2]),int(args.resblock[3])]
