@@ -78,11 +78,13 @@ class Custum_dataset(Dataset):
     def __len__(self):
         return self.len
 
+
+
 def data_loader(args, mode="train"):
     data_path = os.path.join(args.root_path, args.data_path)
     if mode=='train':
         transforms_ = transforms.Compose(
-            [transforms.Resize((224, 224)), 
+            [transforms.Resize((args.image_size, args.image_size)), 
             transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
@@ -93,7 +95,7 @@ def data_loader(args, mode="train"):
 
     else:
         transforms_ = transforms.Compose(
-            [transforms.Resize((224, 224), Image.BICUBIC), 
+            [transforms.Resize((args.image_size, args.image_size), Image.BICUBIC), 
             transforms.ToTensor(),
             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
         dataset = Custum_dataset(data_path, transforms_=transforms_, mode = mode)
