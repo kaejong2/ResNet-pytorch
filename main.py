@@ -16,9 +16,9 @@ def Arguments():
     parser.add_argument('--num_classes', type=int, default=3, help='size of image height')
     
     # Optimizer arguments
-    parser.add_argument('--b1', type=int, default=0.5, help='GPU number to use.')
     parser.add_argument('--lr', type=float, default=0.001, help='Adam : learning rate.')
-    parser.add_argument('--decay_epoch', type=int, default=20, help="epoch from which to start lr decay")
+    parser.add_argument('--momentum', type=int, default=0.9, help="Momentum")
+    parser.add_argument('--weight_decay', type=int, default=5e-4, help="epoch from which to start lr decay")
     # Training arguments
     parser.add_argument('--epoch', type=int, default=0, help='Epoch to start training from.')
     parser.add_argument('--num_epochs', type=int, default=20, help='Number of epochs of training.')
