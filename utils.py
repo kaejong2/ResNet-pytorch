@@ -4,9 +4,10 @@ import datetime
 import sys
 import os
 import torch
-
+import matplotlib.pyplot as plt
 import numpy as np
 from torch.nn import init
+import shutil
 
 class LambdaLR():
     def __init__(self, n_epochs, offset, decay_start_epoch):
@@ -47,21 +48,35 @@ def save(ckpt_dir, Model, optim, epoch):
     
     torch.save({'Model' : Model.state_dict(), 'optim': optim.state_dict()}, "%s/model_epoch%d.pth" % (ckpt_dir, epoch))
 
-def load(args, ckpt_dir, Model, optim, epoch):
-    if not os.path.exists(ckpt_dir):
-        epoch = 0
-        return Model, optim, epoch
+def load_checkpoint(args, device):
+    ckpt_lst = os.listdir(os.path.join(args.root_path, args.load_path))
+    ckpt_lst.sort()
+    dict_model = torch.load('%s/%s'% (os.path.join(args.root_path, args.load_path), ckpt_lst[-1]), map_location=device)
+    print('Loading checkpoint from %s/%s succeed' % (args.load_path, ckpt_lst[-1]))
+    return dict_model
 
-    device = torch.device('cuda:'+str(args.gpu) if torch.cuda.is_available() else 'cpu')
+def dataset_split(query, train_cnt, directory_lst):
+    for dir in directory_lst:
+        if not os.path.isdir(dir+"/"+query):
+            os.makedirs(dir+"/"+query)
+    cnt = 0
+    for file_name in os.listdir(query):
+        if cnt < train_cnt:
+            print(f'[Train dataset] {file_name}')
+            shutil.move(query + '/' + file_name, directory_lst[0] + query + '/' + file_name)
+        else:
+            print(f'[Test dataset] {file_name}')
+            shutil.move(query + '/' + file_name, directory_lst[1] + query + '/' + file_name)
+        cnt += 1
+    shutil.rmtree(query)
 
-    ckpt_lst = os.listdir(ckpt_dir)
-    ckpt_lst.sort(key=lambda f: int(''.join(filter(str.isdigit, f))))
+def imshow(input, title):
+    input = input.numpy().transpose((1,2,0))
+    mean = np.array([0.485, 0.456, 0.406])
+    std = np.array([0.229, 0.224, 0.225])
+    input = std * input + mean
+    input = np.clip(input,0,1)
 
-    dict_model = torch.load('%s/%s'% (ckpt_dir, ckpt_lst[-1]), map_location=device)
-
-    Model.load_state_dict(dict_model['Model'])
-    optim.load_state_dict(dict_model['optim'])
-    epoch = int(ckpt_lst[-1].split('epoch')[1].split('.pth')[0])
-
-    return Model, optim, epoch
-
+    plt.imshow(input)
+    plt.title(title)
+    plt.show()
